@@ -4,6 +4,7 @@ import path from 'path';
 import connectDB from './config/db';
 import env from './config/env';
 import authRoutes from './routes/auth.routes';
+import borrowerRoutes from './routes/borrower.routes';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', env.UPLOAD_DIR)));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/borrower', borrowerRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
