@@ -3,35 +3,27 @@ import jwt from 'jsonwebtoken';
 import User, { UserRole } from '../models/User';
 import env from '../config/env';
 
-// Generate JWT
 const signToken = (id: string, role: string): string => {
   return jwt.sign({ id, role }, env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN,
   });
 };
 
-/**
- * POST /api/auth/register
- * Creates a new borrower account
- */
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate input
     if (!name || !email || !password) {
       res.status(400).json({ message: 'Name, email, and password are required.' });
       return;
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       res.status(409).json({ message: 'An account with this email already exists.' });
       return;
     }
 
-    // Create user (always as borrower for public registration)
     const user = await User.create({
       name,
       email: email.toLowerCase(),
@@ -60,10 +52,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-/**
- * POST /api/auth/login
- * Authenticates a user and returns JWT
- */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -73,14 +61,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Find user with password field
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       res.status(401).json({ message: 'Invalid email or password.' });
       return;
     }
 
-    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       res.status(401).json({ message: 'Invalid email or password.' });
@@ -104,10 +90,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-/**
- * GET /api/auth/me
- * Returns the currently authenticated user
- */
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {

@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 import env from '../config/env';
 
-// Extend Express Request to include user
 declare global {
   namespace Express {
     interface Request {
@@ -25,7 +24,6 @@ const authenticate = async (
   try {
     let token: string | undefined;
 
-    // Check Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer ')
@@ -38,10 +36,8 @@ const authenticate = async (
       return;
     }
 
-    // Verify token
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
-    // Check if user still exists
     const user = await User.findById(decoded.id).select('+password');
     if (!user) {
       res.status(401).json({ message: 'User no longer exists.' });
