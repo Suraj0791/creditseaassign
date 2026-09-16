@@ -130,7 +130,7 @@ export default function ApplyPage() {
     }
   };
 
-  const interest = (form.loanAmount * 12 * form.tenure) / (365 * 100);
+  const interest = Math.round((form.loanAmount * 12 * form.tenure) / (365 * 100));
   const totalRepayment = form.loanAmount + interest;
 
   if (loading) {

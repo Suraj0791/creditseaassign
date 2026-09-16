@@ -117,8 +117,10 @@ export default function CollectionPage() {
       ) : (
         <div className="grid gap-4">
           {applications.map((app) => {
-            const outstanding = (app.totalRepayment || 0) - (app.totalPaid || 0);
-            const paidPercent = app.totalRepayment ? Math.round(((app.totalPaid || 0) / app.totalRepayment) * 100) : 0;
+            const rawOutstanding = (app.totalRepayment || 0) - (app.totalPaid || 0);
+            const isClosed = app.status === 'closed' || rawOutstanding <= 1;
+            const outstanding = isClosed ? 0 : Math.max(0, Math.round(rawOutstanding * 100) / 100);
+            const paidPercent = isClosed ? 100 : (app.totalRepayment ? Math.min(100, Math.round(((app.totalPaid || 0) / app.totalRepayment) * 100)) : 0);
 
             return (
               <div
@@ -132,28 +134,28 @@ export default function CollectionPage() {
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{app.userId?.email}</p>
                   </div>
                   <span
-                    className="px-2 py-0.5 rounded text-xs font-medium"
+                    className="px-2.5 py-0.5 rounded text-xs font-semibold"
                     style={{
-                      backgroundColor: paidPercent >= 100 ? 'var(--success-light)' : 'var(--warning-light)',
-                      color: paidPercent >= 100 ? 'var(--success)' : 'var(--warning)',
+                      backgroundColor: isClosed ? 'var(--success-light)' : 'var(--warning-light)',
+                      color: isClosed ? 'var(--success)' : 'var(--warning)',
                     }}
                   >
-                    {paidPercent}% paid
+                    {isClosed ? 'Closed ✓' : `${paidPercent}% paid`}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-3 text-sm">
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--text-muted)' }}>Total Repayment</span>
-                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>₹{app.totalRepayment?.toLocaleString()}</span>
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>₹{Math.round(app.totalRepayment || 0).toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--text-muted)' }}>Paid</span>
-                    <span className="font-medium" style={{ color: 'var(--success)' }}>₹{(app.totalPaid || 0).toLocaleString()}</span>
+                    <span className="font-medium" style={{ color: 'var(--success)' }}>₹{Math.round(app.totalPaid || 0).toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--text-muted)' }}>Outstanding</span>
-                    <span className="font-medium" style={{ color: outstanding > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                    <span className="font-medium" style={{ color: isClosed ? 'var(--success)' : 'var(--danger)' }}>
                       ₹{outstanding.toLocaleString()}
                     </span>
                   </div>
@@ -163,20 +165,29 @@ export default function CollectionPage() {
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
-                      width: `${Math.min(paidPercent, 100)}%`,
-                      backgroundColor: paidPercent >= 100 ? 'var(--success)' : 'var(--accent)',
+                      width: `${paidPercent}%`,
+                      backgroundColor: isClosed ? 'var(--success)' : 'var(--accent)',
                     }}
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPaymentModal(app._id)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white cursor-pointer"
-                    style={{ backgroundColor: 'var(--accent)' }}
-                  >
-                    Record Payment
-                  </button>
+                <div className="flex items-center gap-2">
+                  {!isClosed ? (
+                    <button
+                      onClick={() => {
+                        setPaymentModal(app._id);
+                        setPaymentForm((p) => ({ ...p, amount: String(outstanding) }));
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-white cursor-pointer"
+                      style={{ backgroundColor: 'var(--accent)' }}
+                    >
+                      Record Payment
+                    </button>
+                  ) : (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-md" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)' }}>
+                      Fully Settled & Closed ✓
+                    </span>
+                  )}
                   <button
                     onClick={() => openHistory(app._id)}
                     className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"

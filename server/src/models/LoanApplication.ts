@@ -32,6 +32,7 @@ export interface ILoanApplication extends Document {
   totalPaid: number;
   status: LoanStatus;
   rejectionReason?: string;
+  closedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,6 +98,9 @@ const loanApplicationSchema = new Schema<ILoanApplication>(
     },
     rejectionReason: {
       type: String,
+    },
+    closedAt: {
+      type: Date,
     },
   },
   {

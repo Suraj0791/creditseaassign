@@ -129,9 +129,11 @@ export const disburseLoan = async (req: Request, res: Response): Promise<void> =
 
 export const getCollectionQueue = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const applications = await LoanApplication.find({ status: LoanStatus.DISBURSED })
+    const applications = await LoanApplication.find({
+      status: { $in: [LoanStatus.DISBURSED, LoanStatus.CLOSED] },
+    })
       .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 });
 
     res.status(200).json({ applications });
   } catch (error) {
@@ -174,7 +176,7 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
     }
 
     const outstanding = (application.totalRepayment || 0) - application.totalPaid;
-    if (parsedAmount > outstanding) {
+    if (parsedAmount > outstanding + 1) {
       res.status(400).json({ message: `Payment amount exceeds outstanding balance of ₹${outstanding.toFixed(2)}` });
       return;
     }
@@ -189,8 +191,10 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
 
     application.totalPaid += parsedAmount;
 
-    if (application.totalPaid >= (application.totalRepayment || 0)) {
+    // Auto-close if paid in full (with 1-rupee rounding tolerance)
+    if (application.totalPaid >= (application.totalRepayment || 0) - 1) {
       application.status = LoanStatus.CLOSED;
+      application.closedAt = new Date();
     }
 
     await application.save();

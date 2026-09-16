@@ -52,14 +52,14 @@ export function runBRE(input: BREInput): BREResult {
 
 export function calculateLoan(principal: number, tenureDays: number) {
   const rate = 12;
-  const interest = (principal * rate * tenureDays) / (365 * 100);
+  const interest = Math.round((principal * rate * tenureDays) / (365 * 100));
   const totalRepayment = principal + interest;
 
   return {
     principal,
     tenureDays,
     rate,
-    interest: Math.round(interest * 100) / 100,
-    totalRepayment: Math.round(totalRepayment * 100) / 100,
+    interest,
+    totalRepayment,
   };
 }
