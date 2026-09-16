@@ -18,6 +18,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ message: 'Please provide a valid email address.' });
+      return;
+    }
+
+    if (password.length < 6) {
+      res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+      return;
+    }
+
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       res.status(409).json({ message: 'An account with this email already exists.' });
