@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import DobDatePicker from '@/components/DobDatePicker';
 
 interface ApplicationData {
   fullName: string;
@@ -231,13 +232,10 @@ export default function ApplyPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>Date of Birth</label>
-                <input
-                  type="date"
+                <DobDatePicker
                   value={form.dob}
-                  onChange={(e) => handleChange('dob', e.target.value)}
+                  onChange={(val) => handleChange('dob', val)}
                   required
-                  className="w-full px-3 py-2.5 rounded-lg text-sm"
-                  style={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
                 />
               </div>
 
