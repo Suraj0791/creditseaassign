@@ -17,7 +17,7 @@ interface ApplicationData {
 }
 
 export default function ApplyPage() {
-  const { user, token, loading } = useAuth();
+  const { user, token, loading, logout } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -143,25 +143,58 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div className="w-full max-w-md text-center p-8 rounded-2xl shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
           <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'var(--success-light)' }}>
-            <span className="text-2xl">✓</span>
+            <span className="text-2xl text-green-600 font-bold">✓</span>
           </div>
           <h1 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             Application Submitted
           </h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
             Your loan application has been submitted and is under review. You will be notified once a decision is made.
           </p>
+
+          <div className="p-4 rounded-xl text-left text-xs space-y-2 mb-6" style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Next step in loan lifecycle:</p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Log in as <strong>Sanction Officer</strong> (<code className="px-1 py-0.5 rounded bg-gray-200">sanction@lms.dev</code>) or <strong>Admin</strong> (<code className="px-1 py-0.5 rounded bg-gray-200">admin@lms.dev</code>) to view, approve, or reject this application in the Operations Dashboard.
+            </p>
+          </div>
+
+          <button
+            onClick={logout}
+            className="w-full py-2.5 rounded-lg text-sm font-medium text-white cursor-pointer transition-colors"
+            style={{ backgroundColor: 'var(--accent)' }}
+          >
+            Sign Out / Switch Role
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-12 px-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <header className="border-b px-6 py-3 flex items-center justify-between" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm" style={{ color: 'var(--accent)' }}>LMS</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }}>Borrower Portal</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{user?.name}</span>
+          <button
+            onClick={logout}
+            className="text-xs px-2.5 py-1 rounded cursor-pointer transition-colors hover:bg-gray-100"
+            style={{ border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
+          >
+            Sign Out
+          </button>
+        </div>
+      </header>
+
+      <div className="py-10 px-4">
+        <div className="max-w-lg mx-auto">
         <div className="mb-8">
           <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             Loan Application
@@ -442,5 +475,6 @@ export default function ApplyPage() {
         )}
       </div>
     </div>
+  </div>
   );
 }
