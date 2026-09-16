@@ -11,7 +11,13 @@ export const checkEligibility = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const result = runBRE({ dob, monthlySalary, pan, employmentMode });
+    const salary = Number(monthlySalary);
+    if (isNaN(salary)) {
+      res.status(400).json({ message: 'Monthly salary must be a valid number' });
+      return;
+    }
+
+    const result = runBRE({ dob, monthlySalary: salary, pan, employmentMode });
 
     if (!result.eligible) {
       res.status(200).json({ eligible: false, errors: result.errors });
@@ -21,10 +27,14 @@ export const checkEligibility = async (req: Request, res: Response): Promise<voi
     const existing = await LoanApplication.findOne({ userId: req.user!._id });
 
     if (existing) {
+      if (existing.status !== LoanStatus.PENDING) {
+        res.status(400).json({ message: 'You already have an active application' });
+        return;
+      }
       existing.fullName = fullName;
       existing.pan = pan.toUpperCase().trim();
       existing.dob = new Date(dob);
-      existing.monthlySalary = monthlySalary;
+      existing.monthlySalary = salary;
       existing.employmentMode = employmentMode;
       await existing.save();
     } else {
@@ -33,7 +43,7 @@ export const checkEligibility = async (req: Request, res: Response): Promise<voi
         fullName,
         pan: pan.toUpperCase().trim(),
         dob: new Date(dob),
-        monthlySalary,
+        monthlySalary: salary,
         employmentMode,
         status: LoanStatus.PENDING,
       });
@@ -73,17 +83,20 @@ export const applyLoan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { loanAmount, tenure } = req.body;
 
-    if (!loanAmount || !tenure) {
+    const parsedAmount = Number(loanAmount);
+    const parsedTenure = Number(tenure);
+
+    if (!parsedAmount || !parsedTenure) {
       res.status(400).json({ message: 'Loan amount and tenure are required' });
       return;
     }
 
-    if (loanAmount < 50000 || loanAmount > 500000) {
+    if (parsedAmount < 50000 || parsedAmount > 500000) {
       res.status(400).json({ message: 'Loan amount must be between ₹50,000 and ₹5,00,000' });
       return;
     }
 
-    if (tenure < 30 || tenure > 365) {
+    if (parsedTenure < 30 || parsedTenure > 365) {
       res.status(400).json({ message: 'Tenure must be between 30 and 365 days' });
       return;
     }
@@ -94,12 +107,17 @@ export const applyLoan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (application.status === LoanStatus.APPLIED) {
+    if (application.status !== LoanStatus.PENDING) {
       res.status(400).json({ message: 'You have already submitted an application' });
       return;
     }
 
-    const calc = calculateLoan(loanAmount, tenure);
+    if (!application.salarySlipUrl) {
+      res.status(400).json({ message: 'Please upload your salary slip first' });
+      return;
+    }
+
+    const calc = calculateLoan(parsedAmount, parsedTenure);
 
     application.loanAmount = calc.principal;
     application.tenure = calc.tenureDays;

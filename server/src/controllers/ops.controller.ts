@@ -150,6 +150,12 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    const parsedAmount = Number(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      res.status(400).json({ message: 'Payment amount must be a positive number' });
+      return;
+    }
+
     const existingPayment = await Payment.findOne({ utrNumber });
     if (existingPayment) {
       res.status(409).json({ message: 'A payment with this UTR number already exists' });
@@ -168,25 +174,20 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
     }
 
     const outstanding = (application.totalRepayment || 0) - application.totalPaid;
-    if (amount > outstanding) {
+    if (parsedAmount > outstanding) {
       res.status(400).json({ message: `Payment amount exceeds outstanding balance of ₹${outstanding.toFixed(2)}` });
-      return;
-    }
-
-    if (amount <= 0) {
-      res.status(400).json({ message: 'Payment amount must be greater than 0' });
       return;
     }
 
     await Payment.create({
       loanId: application._id,
       utrNumber,
-      amount,
+      amount: parsedAmount,
       date: new Date(date),
       recordedBy: req.user!._id,
     });
 
-    application.totalPaid += amount;
+    application.totalPaid += parsedAmount;
 
     if (application.totalPaid >= (application.totalRepayment || 0)) {
       application.status = LoanStatus.CLOSED;
@@ -198,7 +199,11 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
       message: application.status === LoanStatus.CLOSED ? 'Payment recorded. Loan is now closed.' : 'Payment recorded',
       application,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 11000) {
+      res.status(409).json({ message: 'A payment with this UTR number already exists' });
+      return;
+    }
     console.error('Record payment error:', error);
     res.status(500).json({ message: 'Server error' });
   }

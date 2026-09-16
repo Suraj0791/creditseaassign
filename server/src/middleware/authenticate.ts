@@ -38,7 +38,7 @@ const authenticate = async (
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
-    const user = await User.findById(decoded.id).select('+password');
+    const user = await User.findById(decoded.id);
     if (!user) {
       res.status(401).json({ message: 'User no longer exists.' });
       return;

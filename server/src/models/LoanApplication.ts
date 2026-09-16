@@ -104,6 +104,9 @@ const loanApplicationSchema = new Schema<ILoanApplication>(
   }
 );
 
+loanApplicationSchema.index({ userId: 1 });
+loanApplicationSchema.index({ status: 1 });
+
 const LoanApplication = mongoose.model<ILoanApplication>('LoanApplication', loanApplicationSchema);
 
 export default LoanApplication;
