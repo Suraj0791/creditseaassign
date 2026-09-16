@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { useRoleGuard } from '@/lib/useRoleGuard';
 
 interface Application {
   _id: string;
@@ -21,6 +22,7 @@ interface Application {
 }
 
 export default function SanctionPage() {
+  const { authorized } = useRoleGuard(['admin', 'sanction']);
   const { token } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,18 +32,18 @@ export default function SanctionPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchData = () => {
-    if (!token) return;
+  const fetchData = useCallback(() => {
+    if (!token || !authorized) return;
     setLoading(true);
     api.get<{ applications: Application[] }>('/ops/sanction', token)
       .then((data) => setApplications(data.applications))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  };
+  }, [token, authorized]);
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, [fetchData]);
 
   const handleApprove = async (id: string) => {
     setActionLoading(true);
@@ -70,7 +72,7 @@ export default function SanctionPage() {
     }
   };
 
-  if (loading) {
+  if (!authorized || loading) {
     return <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading applications...</p>;
   }
 

@@ -11,7 +11,6 @@ interface ApplicationData {
   dob: string;
   monthlySalary: string;
   employmentMode: string;
-  salarySlipUrl: string;
   loanAmount: number;
   tenure: number;
 }
@@ -31,7 +30,6 @@ export default function ApplyPage() {
     dob: '',
     monthlySalary: '',
     employmentMode: 'salaried',
-    salarySlipUrl: '',
     loanAmount: 100000,
     tenure: 90,
   });
@@ -104,8 +102,7 @@ export default function ApplyPage() {
       const formData = new FormData();
       formData.append('salarySlip', selectedFile);
 
-      const res = await api.upload<{ url: string }>('/borrower/upload-slip', formData, token!);
-      handleChange('salarySlipUrl', res.url);
+      await api.upload<{ url: string }>('/borrower/upload-slip', formData, token!);
       setStep(3);
     } catch (err: any) {
       setError(err.message);

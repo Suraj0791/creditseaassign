@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { useRoleGuard } from '@/lib/useRoleGuard';
 
 interface Lead {
   _id: string;
@@ -12,21 +13,22 @@ interface Lead {
 }
 
 export default function SalesPage() {
+  const { authorized } = useRoleGuard(['admin', 'sales']);
   const { token } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !authorized) return;
     setLoading(true);
     api.get<{ leads: Lead[] }>('/ops/sales', token)
       .then((data) => setLeads(data.leads))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, authorized]);
 
-  if (loading) {
+  if (!authorized || loading) {
     return <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading leads...</p>;
   }
 

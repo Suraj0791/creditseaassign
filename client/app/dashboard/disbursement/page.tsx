@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { useRoleGuard } from '@/lib/useRoleGuard';
 
 interface Application {
   _id: string;
@@ -16,6 +17,7 @@ interface Application {
 }
 
 export default function DisbursementPage() {
+  const { authorized } = useRoleGuard(['admin', 'disbursement']);
   const { token } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +25,13 @@ export default function DisbursementPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !authorized) return;
     setLoading(true);
     api.get<{ applications: Application[] }>('/ops/disbursement', token)
       .then((data) => setApplications(data.applications))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, authorized]);
 
   const handleDisburse = async (id: string) => {
     setActionLoading(id);
@@ -43,7 +45,7 @@ export default function DisbursementPage() {
     }
   };
 
-  if (loading) {
+  if (!authorized || loading) {
     return <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading...</p>;
   }
 
