@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: lms-backend
+    env: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        value: "" # Update this in Render Dashboard once Vercel is deployed
+      # The following sensitive variables must be set manually in the Render Dashboard:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
