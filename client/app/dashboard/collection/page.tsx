@@ -34,6 +34,7 @@ export default function CollectionPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   const [paymentForm, setPaymentForm] = useState({
     utrNumber: '',
@@ -82,12 +83,28 @@ export default function CollectionPage() {
 
   const handleRecordPayment = async () => {
     if (!paymentModal || !paymentForm.utrNumber || !paymentForm.amount || !paymentForm.date) return;
+    
+    const utr = paymentForm.utrNumber.trim().toUpperCase();
+    if (!utr.startsWith('UTR') || utr.length < 10) {
+      setModalError('UTR must start with "UTR" and be at least 10 characters long.');
+      return;
+    }
+
+    const selectedApp = applications.find(a => a._id === paymentModal);
+    const outstanding = selectedApp ? (selectedApp.totalRepayment || 0) - (selectedApp.totalPaid || 0) : 0;
+    
+    if (Number(paymentForm.amount) > outstanding + 1) {
+      setModalError(`Payment amount cannot exceed outstanding balance of ₹${Math.round(outstanding).toLocaleString('en-IN')}`);
+      return;
+    }
+
     setActionLoading(true);
+    setModalError('');
     try {
       await api.post(
         '/ops/collection/' + paymentModal + '/payment',
         {
-          utrNumber: paymentForm.utrNumber.trim(),
+          utrNumber: utr,
           amount: Number(paymentForm.amount),
           date: paymentForm.date,
         },
@@ -97,7 +114,7 @@ export default function CollectionPage() {
       setPaymentForm({ utrNumber: '', amount: '', date: new Date().toISOString().split('T')[0] });
       fetchData();
     } catch (err: any) {
-      setError(err.message);
+      setModalError(err.message);
     } finally {
       setActionLoading(false);
     }
@@ -307,6 +324,7 @@ export default function CollectionPage() {
                     <button
                       type="button"
                       onClick={() => {
+                        setModalError('');
                         setPaymentModal(app._id);
                         setPaymentForm((p) => ({ ...p, amount: String(outstanding) }));
                       }}
@@ -348,6 +366,12 @@ export default function CollectionPage() {
             <p className="text-xs font-medium text-slate-500 mb-5 leading-relaxed">
               Enter bank transaction reference (UTR) and the verified payment amount received.
             </p>
+
+            {modalError && (
+              <div className="mb-4 px-3 py-2.5 rounded-xl text-xs font-bold border bg-rose-50 border-rose-200 text-rose-700 leading-relaxed">
+                {modalError}
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
@@ -396,6 +420,7 @@ export default function CollectionPage() {
                 type="button"
                 onClick={() => {
                   setPaymentModal(null);
+                  setModalError('');
                   setPaymentForm({ utrNumber: '', amount: '', date: new Date().toISOString().split('T')[0] });
                 }}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs"

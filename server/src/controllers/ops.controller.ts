@@ -152,6 +152,12 @@ export const recordPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    const utrStr = utrNumber.trim().toUpperCase();
+    if (!utrStr.startsWith('UTR') || utrStr.length < 10) {
+      res.status(400).json({ message: 'UTR must start with "UTR" and be at least 10 characters long' });
+      return;
+    }
+
     const parsedAmount = Number(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       res.status(400).json({ message: 'Payment amount must be a positive number' });
